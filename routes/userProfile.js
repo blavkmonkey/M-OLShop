@@ -4,6 +4,22 @@ var router = express.Router();
 var mongoose = require( 'mongoose' );
 var User = mongoose.model('User');
 var bCrypt = require('bcrypt-nodejs');
+var multer = require('multer');
+var fs = require('fs');
+
+var storage = multer.diskStorage({ //multers disk storage settings
+        destination: function (req, file, cb) {
+            cb(null, './public/img/products/')
+        },
+        filename: function (req, file, cb) {
+            console.log(file);
+            var datetimestamp = Date.now();
+            cb(null, file.originalname)
+        }
+    });
+var upload = multer({ //multer settings
+                    storage: storage
+                }).single('file');
 
 //Used for routes that must be authenticated.
 function isAuthenticated (req, res, next) {
@@ -39,17 +55,13 @@ router.route('/:id')
     })   
     .put(function(req, res) {
            User.findById(req.param('id'), function(err, user){            
-                
                 user.username = req.body.username;
                 user.firstname = req.body.firstname;
                 user.lastname = req.body.lastname;
                 user.shippingAddress = req.body.shippingAddress;
                 user.billingAddress = req.body.billingAddress;
-                console.log(req.body.billingAddr);
-                console.log(user.BillingAddr);
-            
-                user.email = req.body.email;
-                user.password = createHash(req.body.password);               
+                user.image = req.body.image;     
+                user.email = req.body.email;                       
                 user.save(function(err, user){
                     if(err)                        
                         res.send({state: 'failure', user:user, message: "Failed to update profile"});
@@ -64,26 +76,35 @@ router.route('/changePassword/:id')
     .put(function(req, res) {
            User.findById(req.param('id'), function(err, user){            
                 console.log(user.password);
+                console.log(req.body.password);
                 if (!isValidPassword(user, req.body.password)){
                             console.log('Invalid Password');
-                            res.send({state: 'failure', user:user, message: "Invalid username or password"});
+                            res.send({state: 'failure', user:user, message: "Invalid password"});
                 }          
-                else{
-                    user.username = req.body.username;
-                    user.password = createHash(req.body.newPassword);               
+                else{                   
+                    user.password = createHash(req.body.newPasswordOne);               
                     user.save(function(err, user){
                         if(err)
-                            res.send(err);
+                            res.send({state: 'failure', user:user, message: "Failed to change password"});
 
-                        res.json(user);
+                        res.send({state: 'success', user:user, message: "Password changed successfully"});
                     });
                 }
             });
         });
 
-
-
-   
+router.route('/upload/')
+    .post(function(req, res) {
+        upload(req,res,function(err){
+            if(err){
+                 console.log(err);
+                 res.json({error_code:1,err_desc:err});
+                 return;
+            }
+             res.json({error_code:0,err_desc:null});
+        })
+       
+    })
 
     var isValidPassword = function(user, password){
         return bCrypt.compareSync(password, user.password);
