@@ -30,7 +30,7 @@ var mongoose = require('mongoose');                         //add for Mongo supp
 
 //connect to Mongo
 if (app.get('env') === 'production') {
-    mongoose.connect('mongodb://testUser:testPassword@ds021989.mlab.com:21989/bookstore'); 
+    mongoose.connect('mongodb://testUser:testPassword@ds013901.mlab.com:13901/mybookstore'); 
 }
 else{
     mongoose.connect('mongodb://localhost/bookstore');             
