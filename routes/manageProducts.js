@@ -18,7 +18,7 @@ var storage = multer.diskStorage({ //multers disk storage settings
     });
 var upload = multer({ //multer settings
                     storage: storage
-                }).single('file');
+                }).array('file',4);
 
 //Used for routes that must be authenticated.
 function isAuthenticated (req, res, next) {
@@ -44,13 +44,13 @@ router.use('/', isAuthenticated);
 router.route('/all/')
 	//creates a new post
 	.post(function(req, res){
-        console.log(req.body.image);
+        console.log(req.body.images);
 		var product = new Product();
         product.title = req.body.title;
         product.author = req.body.author;
         product.description = req.body.description;
         product.category = req.body.category;
-        product.image = req.body.image;
+        product.images = req.body.images;
         product.price = req.body.price;
         product.stock = req.body.stock;
         product.status = req.body.status;
@@ -93,7 +93,7 @@ router.route('/id/:id')
                 product.author = req.body.author;
                 product.description = req.body.description;
                 product.category = req.body.category;
-                product.image = req.body.image;
+                product.images = req.body.images;
                 product.price = req.body.price;
                 product.stock = req.body.stock;
                 product.status = req.body.status;  
@@ -112,8 +112,8 @@ router.route('/search/')
         var regex = new RegExp(req.query.searchText, "i");
         var limit = parseInt(req.query.limit);
         var skip = parseInt(req.query.skip);          
-        Product.find( { $or:[ {'title':regex}, {'description':regex} ]},null,{limit: limit , skip: skip}).exec(function(err, products){
-            Product.find( { $or:[ {'title':regex}, {'description':regex} ]}).count().exec(function(err, count){
+        Product.find( { $or:[ {'title':regex}, {'description':regex}, {'author':regex}, {'category':regex} ]},null,{limit: limit , skip: skip}).exec(function(err, products){
+            Product.find( { $or:[ {'title':regex}, {'description':regex}, {'author':regex}, {'category':regex} ]}).count().exec(function(err, count){
                 res.send({data: products, items:count})
             })
         });
@@ -124,9 +124,40 @@ router.route('/searchGrid/')
     .get(function(req, res){
         var regex = new RegExp(req.query.searchText, "i");
         var limit = parseInt(req.query.limit);
-        var skip = parseInt(req.query.skip);          
-        Product.find( {$and:[{ $or:[ {'title':regex}, {'description':regex} ]},{'status':'Active'}]},null,{limit: limit , skip: skip}).exec(function(err, products){
-            Product.find( {$and:[{ $or:[ {'title':regex}, {'description':regex} ]},{'status':'Active'}]}).count().exec(function(err, count){
+        var skip = parseInt(req.query.skip);
+        var cat = new RegExp(req.query.cat, "i");
+
+        var sortItem = req.query.sortItem;
+        var sort_order = {};
+        var sortby = "";
+
+        console.log(sort_order);
+        if (sortItem == "Sort by Title Ascending"){
+            sortby = "title";
+            sortorder = 1;
+        }else if (sortItem == "Sort by Title Descending"){
+            sortby = "title";
+            sortorder = -1;
+        }else if (sortItem =="Sort by Price from Lowest to Highest"){
+            sortby = "price";
+            sortorder = 1;
+        }else if (sortItem =="Sort by Price from Highest to Lowest"){
+            sortby = "price";
+            sortorder = -1;
+        }else if (sortItem =="Sort by newest to oldest"){
+            sortby = "created_at";
+            sortorder = -1;
+        }else if (sortItem =="Sort by oldest to newest"){
+            sortby = "price";
+            sortorder = 1;
+        } else {
+            sortby = "created_at";
+            sortorder = -1;
+        }
+        sort_order[sortby] = sortorder;
+        console.log(sort_order);
+        Product.find( {$and:[{$and:[{ $or:[ {'title':regex}, {'description':regex}, {'author':regex}, {'category':regex} ]},{'status':'Active'}]},{'category':cat}]},null,{limit: limit , skip: skip}).sort(sort_order).exec(function(err, products){
+            Product.find( {$and:[{$and:[{ $or:[ {'title':regex}, {'description':regex}, {'author':regex}, {'category':regex} ]},{'status':'Active'}]},{'category':cat}]}).sort(sort_order).count().exec(function(err, count){
                 res.send({data: products, items:count})
             })
         });
