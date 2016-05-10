@@ -21,12 +21,24 @@
         <div class="col-lg-12">
             <div class="ibox product-detail">
                 <div class="ibox-content">
+                 <div>
+                    <uib-alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</uib-alert>     
+                </div>
                     <div class="row">
                         <div class="col-md-5">
                             <slick dots="true">
                                 <div>
-                                    <div class="image-imitation.xl">
-                                         <img class="img-responsive" ng-src="img/products/{{product.image}}"/>
+                                    <!-- Image Gallery ng-show='product.images[0].length' -->
+                                    <div class="gallery">
+                                        <img class="img-responsive" ng-src="img/products/{{dispPic}}" src="img/no-photo.png" style="height:400px" />
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-sm-4 col-md-3" ng-repeat="image in product.images">
+                                                <a ng-click="changePic(image.image)">
+                                                    <img ng-src="img/products/{{image.image}}" width="100px" height="100px" />
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </slick>
@@ -47,7 +59,8 @@
                             <h4>Product description</h4>
 
                             <div class="small text-muted">
-                                {{product.description}}
+                                <p ng-text-truncate="product.description" ng-tt-words-threshold="150"></p>
+                                <!--{{product.description}}-->
                             </div>
                             <hr>
                             <dl class="small m-t-md">
@@ -58,7 +71,7 @@
                             </dl>
                             <div>
                                 <div class="btn-group">
-                                    <button class="btn btn-primary btn-sm"><i class="fa fa-cart-plus"></i> Add to cart</button>
+                                    <button class="btn btn-primary btn-sm" ng-click = "addToCart()"><i class="fa fa-cart-plus"></i> Add to cart</button>
                                     <button class="btn btn-white btn-sm"><i class="fa fa-star"></i> Add to wishlist </button>
                                     <button class="btn btn-white btn-sm"><i class="fa fa-envelope"></i> Contact with author </button>
                                 </div>

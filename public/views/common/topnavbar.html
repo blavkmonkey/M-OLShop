@@ -78,14 +78,14 @@
                 </ul>
             </li> -->
             <li uib-dropdown ng-show ={{authenticated}}>
-                <a class="count-info" href uib-dropdown-toggle>
-                    <i class="fa fa-bell"></i> <span class="label label-primary">8</span>
+                <a class="count-info" href uib-dropdown-toggle ui-sref="commerce.cart">
+                    <i class="glyphicon glyphicon-shopping-cart"></i> <span class="label label-primary">0</span>
                 </a>
-                <ul class="dropdown-alerts" uib-dropdown-menu>
+                <!--<ul class="dropdown-alerts" uib-dropdown-menu>
                     <li>
                         <a ui-sref="inbox">
                             <div>
-                                <i class="fa fa-envelope fa-fw"></i> You have 16 messages
+                                <i class="fa fa-envelope fa-fw"></i> You have 0 item(s) in your cart
                                 <span class="pull-right text-muted small">4 minutes ago</span>
                             </div>
                         </a>
@@ -117,7 +117,7 @@
                             </a>
                         </div>
                     </li>
-                </ul>
+                </ul>-->
             </li>
             <li>
                 <a ng-if="authenticated" ng-click="signout()">

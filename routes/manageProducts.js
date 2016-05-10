@@ -54,6 +54,7 @@ router.route('/all/')
         product.price = req.body.price;
         product.stock = req.body.stock;
         product.status = req.body.status;
+        product.ISBN = req.body.ISBN;
 		product.save(function(err, post) {
 			if (err){
                 console.log(err);
@@ -88,7 +89,8 @@ router.route('/id/:id')
     })
     .put(function(req, res) {
            Product.findById(req.param('id'), function(err, product){            
-                console.log('updateProductsById-1');  
+                console.log('updateProductsById-1');
+                console.log(req.body.ISBN);
                 product.title = req.body.title;
                 product.author = req.body.author;
                 product.description = req.body.description;
@@ -97,6 +99,7 @@ router.route('/id/:id')
                 product.price = req.body.price;
                 product.stock = req.body.stock;
                 product.status = req.body.status;  
+                product.ISBN = req.body.ISBN;
                 product.save(function(err, product){
                     if(err)                        
                         res.send({state: 'failure', product:product, message: "Failed to update product"});
@@ -161,8 +164,24 @@ router.route('/searchGrid/')
                 res.send({data: products, items:count})
             })
         });
-    
        })
+
+router.route('/relatedCategory/')
+    .get(function(req, res){
+        var regex = new RegExp(req.query.searchText, "i");
+        var limit = parseInt(req.query.limit);
+        var skip = parseInt(req.query.skip);
+        var cat = new RegExp(req.query.cat, "i");
+
+        var sortItem = req.query.sortItem;
+        var sort_order = {};
+        var sortby = "-1";
+        Product.find( {$and:[{$and:[{ $or:[ {'title':regex}, {'description':regex}, {'author':regex}, {'category':regex} ]},{'status':'Active'}]},{'category':cat}]},null,{limit: limit , skip: skip}).sort(sort_order).exec(function(err, products){
+            Product.find( {$and:[{$and:[{ $or:[ {'title':regex}, {'description':regex}, {'author':regex}, {'category':regex} ]},{'status':'Active'}]},{'category':cat}]}).sort(sort_order).count().exec(function(err, count){
+                res.send({data: products, items:count})
+            })
+        });
+    })
 
 router.route('/upload/')
     .post(function(req, res) {

@@ -54,7 +54,15 @@
             <div class="ibox">
                 <div class="ibox-content product-box">
                     <div class="product-imitation.xl">
-                        <a ui-sref="commerce.product_details({id : item._id})"> <img style="height:250px;" class="img-responsive" ng-src="img/products/{{item.image}}" src="img/no-photo.png"/></a>
+                        <a ui-sref="commerce.product_details({id : item._id})"> 
+                            <!--<img style="height:250px;" class="img-responsive" ng-src="img/products/{{item.image}}" src="img/no-photo.png"/>-->
+                            <td>
+                                <img ng-show="!(item.images | filter : {primary : true}).length" alt="image" style="height:150px; width:110px; margin-bottom: 20px;"
+                                    src="img/no-photo.png">
+                                <img ng-repeat="image in item.images | filter : {primary : true}" alt="image" style="height:150px; width:110px; margin-bottom: 20px;"
+                                    ng-src="img/products/{{image.image }}" src="img/no-photo.png">
+                            </td>
+                        </a>
                     </div>
                     <div class="product-desc">
                     <span class="product-price">
@@ -66,9 +74,9 @@
                     <div class="small m-t-xs">
                         {{item.description | limitTo: 30}} ...
                     </div>
-                    created at: {{item.created_at | date}}
                     <div class="m-t text-righ">                        
                         <a ui-sref="commerce.product_details({id : item._id})" class="btn btn-xs btn-outline btn-primary">Book Details <i class="fa fa-long-arrow-right"></i> </a>
+                        <a ng-if ="adminUser" ui-sref="commerce.edit_product({id : item._id})" class="btn btn-xs btn-outline btn-primary">Edit Book <i class="fa fa-long-arrow-right"></i> </a>
                     </div>
                     </div>
                 </div>

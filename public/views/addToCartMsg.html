@@ -1,0 +1,49 @@
+<div class="inmodal" ng-controller="relatedProduct">
+    <div class="modal-header">
+        <small class="modal-title"><i class="glyphicon glyphicon-ok-sign"></i>&nbsp&nbsp Book Title: <b>{{bookTitle}}</b> <br> has been successfully added into your shopping cart</small>
+    </div>
+
+    <div class="modal-body">
+        <p>
+            <strong>See related books</strong> with category: <b>{{catFilter}}</b><br>
+        </p>
+        <div>
+            <button class="btn btn-primary btn-sm" ng-click="ok()">Continue Shopping</button>
+            <button class="btn btn-primary btn-sm" ng-click = "continueOrder()"><i class="glyphicon glyphicon-shopping-cart"></i>&nbsp&nbsp Continue to Order</button>
+        </div>
+        <br>
+        <div class="col-md-3" ng-repeat-start="item in products">
+            <div class="ibox">
+                <div class="ibox-content product-box">
+                    <div class="product-imitation.xl">
+                        <td>
+                            <img ng-show="!(item.images | filter : {primary : true}).length" alt="image" style="height:150px; width:110px; margin-bottom: 20px;"
+                                src="img/no-photo.png">
+                            <img ng-repeat="image in item.images | filter : {primary : true}" alt="image" style="height:150px; width:110px; margin-bottom: 20px;"
+                                ng-src="img/products/{{image.image }}" src="img/no-photo.png">
+                        </td>
+                    </div>
+                    <div class="product-desc">
+                    <small class="text-muted"> {{item.title}}</small><br>
+                    <span >
+                        {{item.price | currency}}
+                    </span>
+                    <div class="m-t text-righ">                        
+                        <!--<a ui-sref="commerce.product_details({id : })" class="btn btn-xs btn-outline btn-primary">Book Details <i class="fa fa-long-arrow-right"></i> </a>-->
+                        <button class="btn btn-white btn-sm" ng-click = "openDetails(item._id)"><i class="glyphicon glyphicon-folder-open"></i>&nbsp&nbsp Book Details</button>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div ng-repeat-end=""></div>
+    </div>
+    <div class="modal-footer">
+    </div>
+    <center>
+        <div>
+            <uib-pagination boundary-links="true" ng-change="pageChanged()" items-per-page="itemsPerPage" total-items="totalItems" ng-model="currentPage" class="pagination-sm"  previous-text="&lsaquo;" next-text="&rsaquo;" first-text="&laquo;" last-text="&raquo;"></uib-pagination>
+        </div>
+    </center>
+</div>
+

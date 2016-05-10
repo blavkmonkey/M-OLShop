@@ -1511,7 +1511,7 @@ function modalDemoCtrl($scope, $uibModal) {
     };
 };
 
-function ModalInstanceCtrl ($scope, $uibModalInstance) {
+function ModalInstanceCtrl ($scope, $uibModalInstance,$location) {
 
     $scope.ok = function () {
         $uibModalInstance.close();
@@ -1521,6 +1521,14 @@ function ModalInstanceCtrl ($scope, $uibModalInstance) {
         $uibModalInstance.dismiss('cancel');
     };
 
+    $scope.openDetails = function(productId){
+        $location.path('/commerce/product_details/'+productId);
+        $uibModalInstance.close();    
+    }
+    $scope.continueOrder = function(productId){
+        $location.path('/commerce/cart');
+        $uibModalInstance.close();    
+    }
 
     $scope.states = [
         'Alabama',
@@ -3454,7 +3462,7 @@ function userController($scope, $rootScope,$location, $http, Upload){
        }
        $scope.upload = function (file) {
             Upload.upload({
-                url: './public/img/products/', //webAPI exposed to upload the file
+                url: 'http://localhost:3000/userProfile/upload', //webAPI exposed to upload the file
                 data:{file:file} //pass file as data, should be user ng-model
             }).then(function (resp) { //upload function returns a promise
                 if  (resp.data.error_code === 0){ //validate success
@@ -3483,8 +3491,20 @@ function userController($scope, $rootScope,$location, $http, Upload){
     };
 }
 
+
 function productController($scope, $rootScope, $location, $http, $stateParams){
     
+     $http.get("auth/getUser").then(function(result) {     
+        if(result.data != ''){
+            $scope.user = result.data;
+            $scope.authenticated = true;
+            $scope.adminUser = result.data.isAdmin;
+        }else{
+            $scope.authenticated = false;
+            $scope.user = '';
+            $scope.adminUser = '';
+        }
+    })
     //<-- arrived from navigation bar or landing page or back from product detail. set the $stateParams value.
     var category='All';
     if ($stateParams.cat != ''){
@@ -3521,7 +3541,7 @@ function productController($scope, $rootScope, $location, $http, $stateParams){
     // end here -->
     
     if ($rootScope.totalItems != undefined){
-        $scope.totalItems = $rootScope.totalItems   
+        $scope.totalItems = $rootScope.totalItems    
     }else{
         $scope.totalItems = 0;  
     };
@@ -3578,38 +3598,119 @@ function productController($scope, $rootScope, $location, $http, $stateParams){
         });
     }
 }
-function productItemController($scope, $stateParams, $http, $location){
+function productItemController($scope, $stateParams, $http, $location, $uibModal, $rootScope){
     $http.get("product/id/"+ $stateParams.id).then(function(result) {     
         if(result.data != ''){
             $scope.product = result.data;
+            for (i=0;i<result.data.images.length;i++){
+                if (result.data.images[i].primary){
+                   $scope.dispPic = result.data.images[i].image;
+                }
+            }
         }else{
             $scope.product = '';
         }
     });
+    $scope.changePic = function (filename) {
+        $scope.dispPic = filename;
+    }
+    $scope.addToCart = function (){
+        if (! $scope.authenticated){
+            $location.path('/login');
+        }else{
+            $rootScope.relatedCategory = $scope.product.category;
+            $rootScope.bookTitle = $scope.product.title;
+            var modalInstance = $uibModal.open({
+                templateUrl: 'views/addToCartMsg.html',
+                size: 'lg',
+                controller: ModalInstanceCtrl
+            });  
+        }
+    }
+    $scope.closeAlert = function(index) {
+            $scope.alerts.splice(index, 1);
+    };
 }
+function relatedProduct($scope, $rootScope, $location){
+    switch ($rootScope.relatedCategory){
+        case 'History': 
+            $scope.catFilter = 'History';
+            break;
+        case 'Children Books':
+            $scope.catFilter = 'Children Books';
+            break;
+        case 'Cooking & Food':
+            $scope.catFilter = 'Cooking & Food';
+            break;
+        case 'Fiction':
+            $scope.catFilter = 'Fiction';
+            break;
+        case 'Science & Technology':
+            $scope.catFilter = 'Science & Technology';
+            break;
+        case 'Uncategorized':
+            $scope.catFilter = 'Uncategorized';
+            break;
+        default:
+            $scope.catFilter ='';
+    }
+    $scope.bookTitle = $rootScope.bookTitle;
+    $rootScope.relatedCategory = '';
+    $rootScope.bookTitle = '';
 
+    $scope.searchText = '';
+    $scope.totalItems = 0;
+    $scope.currentPage = 1;
+    $scope.itemsPerPage = 4;
+
+    var parameters = { searchText: $scope.searchText, limit:$scope.itemsPerPage, skip:($scope.currentPage -1 )*  $scope.itemsPerPage, cat: $scope.catFilter, sortItem: $scope.sortItem};
+
+    $.get( 'product/relatedCategory',parameters, function(result) {
+        $scope.products = result.data; 
+        $scope.totalItems = result.items;
+        $scope.$apply();
+        });
+    
+    $scope.pageChanged = function() {
+        var parameters = { searchText: $scope.searchText, limit:$scope.itemsPerPage, skip:($scope.currentPage -1 )*  $scope.itemsPerPage, cat: $scope.catFilter, sortItem: $scope.sortItem};
+        $.get( 'product/relatedCategory',parameters, function(result) {                         
+            $scope.products = result.data; 
+            $scope.$apply();
+        });
+    };
+    
+    $scope.search = function(searchText,cat,sortItem){
+        var parameters = { searchText: searchText, limit:$scope.itemsPerPage, skip:($scope.currentPage -1 )*  $scope.itemsPerPage, cat: $scope.catFilter, sortItem: $scope.sortItem};
+        $.get( 'product/relatedCategory',parameters, function(result) {
+            $scope.products = result.data;
+            $scope.totalItems = result.items;
+            $scope.$apply();
+        });
+    }
+}
 function addProductController($scope, $rootScope, $http, $location, Upload){
     if ($rootScope.authenticated){
         
         $scope.alerts = []; 
         $scope.product = {};
         $scope.product.images = [];
-        $scope.addProduct = function(){           
-            if($scope.file != undefined){
-            //$scope.product.image = $scope.file.name;
-            }
-            alert( $scope.product.images);            
-            console.log($scope.product.images);
-            $http.post("product/all",  JSON.stringify($scope.product)).success(function(data, status){
-                $scope.alerts = []; 
-                $scope.alerts.push({type:'success', msg:'New product has been successfully added into database'});               
-                $scope.product = '';
-                $location.path('/commerce/add_product');
-            })
-            .error(function(data,status,header,config){
-                $scope.alerts = []; 
-                $scope.alerts.push({type:'danger', msg:"http error: "+ status});               
-            });
+        $scope.addProduct = function(isValid){    
+          if(isValid)  {
+                if($scope.file != undefined){
+                //$scope.product.image = $scope.file.name;
+                }                    
+                console.log($scope.product.images);
+                $http.post("product/all",  JSON.stringify($scope.product)).success(function(data, status){
+                    $scope.alerts = []; 
+                    $scope.alerts.push({type:'success', msg:'New product has been successfully added into database'});              $scope.submitted = false;
+                    $scope.product = '';
+                    $location.path('/commerce/add_product');
+                })
+                .error(function(data,status,header,config){
+                    $scope.alerts = []; 
+                    $scope.alerts.push({type:'danger', msg:"http error: "+ status});               
+                });
+          }
         };
         $scope.closeAlert = function(index) {
                 $scope.alerts.splice(index, 1);
@@ -3623,7 +3724,7 @@ function addProductController($scope, $rootScope, $http, $location, Upload){
                 $scope.alerts.push({type:'danger', msg:"Maximum 4 Images Upload"});    
             }else {
                 Upload.upload({
-                    url: './public/img/products/', //webAPI exposed to upload the file
+                    url: 'http://localhost:3000/product/upload', //webAPI exposed to upload the file
                     arrayKey: '', 
                     data:{file:file} //pass file as data, should be user ng-model
                 }).then(function (resp) { //upload function returns a promise
@@ -3679,26 +3780,28 @@ function editProductController($scope, $rootScope, $http, $location, $stateParam
 
         $scope.updateProduct = updateProduct;
         
-        function updateProduct(){
-            $http.put("product/id/"+ $stateParams.id,$scope.product).success(function(data, status){                 
-                $scope.alerts = [];
-                $scope.alerts.push({type:'success', msg:'Product has been successfully updated'}); 
-                
-                $scope.product = data.product;
-                
-                var primary = $.grep($scope.product.images, function(e){ return e.primary == true; });
-                
-                if (primary.length == 1) {
-                    $scope.primaryImage = primary[0].image;
-                } else{
-                      $scope.primaryImage = "no-photo.png";
-                }  
-                
-            })
-            .error(function(data,status,header,config){
-                $scope.alerts = []; 
-                $scope.alerts.push({type:'danger', msg:"http error: "+ status});     
-            });
+        function updateProduct(isValid){
+            if(isValid){
+                $http.put("product/id/"+ $stateParams.id,$scope.product).success(function(data, status){                 
+                    $scope.alerts = [];
+                    $scope.alerts.push({type:'success', msg:'Product has been successfully updated'}); 
+
+                    $scope.product = data.product;
+
+                    var primary = $.grep($scope.product.images, function(e){ return e.primary == true; });
+
+                    if (primary.length == 1) {
+                        $scope.primaryImage = primary[0].image;
+                    } else{
+                          $scope.primaryImage = "no-photo.png";
+                    }  
+
+                })
+                .error(function(data,status,header,config){
+                    $scope.alerts = []; 
+                    $scope.alerts.push({type:'danger', msg:"http error: "+ status});     
+                });
+            }
         };
         
         $scope.closeAlert = function(index) {
@@ -3711,7 +3814,7 @@ function editProductController($scope, $rootScope, $http, $location, $stateParam
                 $scope.alerts.push({type:'danger', msg:"Maximum 4 Images Upload"});    
             }else {
                 Upload.upload({
-                    url: './public/img/products/', //webAPI exposed to upload the file
+                    url: 'http://localhost:3000/product/upload', //webAPI exposed to upload the file
                     arrayKey: '', 
                     data:{file:file} //pass file as data, should be user ng-model
                 }).then(function (resp) { //upload function returns a promise
@@ -3745,9 +3848,10 @@ function editProductController($scope, $rootScope, $http, $location, $stateParam
                 
                 if($scope.product.images[i]._id == imageId){                   
                     $scope.product.images[i].primary = true;
+                    $scope.primaryImage = $scope.product.images[i].image;
                 }
             }
-            
+
              $scope.updateProduct();
         }
         
@@ -3877,4 +3981,5 @@ angular
             }
         })
     .controller('userController', userController)
-    .controller('manageProductController', manageProductController);
+    .controller('manageProductController', manageProductController)
+    .controller('relatedProduct', relatedProduct);
